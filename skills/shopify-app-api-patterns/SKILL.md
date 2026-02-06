@@ -215,9 +215,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const body = await request.json();
   
+  // Whitelist allowed fields - never pass raw body to database
+  const { theme, position, welcomeMessage } = body;
+  
   const updated = await db.widgetConfig.update({
     where: { shop: session.shop },
-    data: body
+    data: { theme, position, welcomeMessage }
   });
   
   return json(updated);
@@ -304,6 +307,8 @@ app/
 4. **Handle loading states** - Use `navigation.state` or `fetcher.state`
 5. **Return proper HTTP codes** - 404 for not found, 400 for bad requests
 6. **Type your data** - Use `useLoaderData<typeof loader>()` for type safety
+7. **Validate and sanitize input** - Never trust user input; validate format and whitelist allowed fields
+8. **Avoid mass assignment** - Never pass raw request body directly to database; explicitly select allowed fields
 
 ## References
 

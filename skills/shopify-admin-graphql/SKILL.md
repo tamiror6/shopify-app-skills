@@ -53,6 +53,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const email = formData.get("email") as string;
   
+  // Validate email format to prevent query manipulation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    return json({ error: "Invalid email format" }, { status: 400 });
+  }
+  
+  // Escape quotes and wrap in quotes to treat as literal value
+  const sanitizedEmail = email.replace(/"/g, '\\"');
+  
   const response = await admin.graphql(`
     query FindCustomerByEmail($query: String!) {
       customers(first: 1, query: $query) {
@@ -68,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     }
   `, {
-    variables: { query: `email:${email}` }
+    variables: { query: `email:"${sanitizedEmail}"` }
   });
   
   const { data } = await response.json();
